@@ -1,6 +1,6 @@
 /**
  *  AV Input - Automatically set an AV input based on a mode or a switch
- *   
+ *
  */
 
 definition(
@@ -31,6 +31,9 @@ preferences {
 		input(name: "inputChan", type: "text", title: "Which channel?", required: false)
         input(name: "level", type: "text", title: "What volume level?", required: false)
 	}
+    section("DirecTV Address...") {
+		input(name: "directIP", type: "text", title: "IP Address?", required: false)
+	}
 }
 
 
@@ -47,21 +50,25 @@ private def initialize() {
 	log.debug("initialize() with settings: ${settings}")
 	subscribe(switches, "switch.on", receiverHandler)
     subscribe(motions, "motion.active", receiverHandler)
-    
 	subscribe(location, "mode", modeHandler)
 }
 
 // If we detect the Hub moving into a sleep mode, also activate the handler
 def modeHandler(evt) {
 	log.debug "changing mode $evt"
-    for(smode in smodes) { 
-    	if(location.mode == smode) { 
+    for(smode in smodes) {
+    	if(location.mode == smode) {
     		receiverHandler(evt)
     	}
     }
 }
 
 def receiverHandler(evt) {
+
+	//IF WE HAVE A DIRECTV IP, TURN IT ON
+	if (directIP != null)
+		receivers?.powerOnDirecTV(directIP)
+
 	receivers?.inputSelect(inputChan)
     receivers?.setLevel(level)
     receivers?.refresh()
